@@ -1,0 +1,52 @@
+{
+  "name": "@vernok/vite-plugin-october",
+  "version": "0.0.1",
+  "description": "Vite 8 plugins for OctoberCMS themes and plugins: auto-discovery, October-friendly outputs, and zero-config defineConfig wrappers.",
+  "license": "MIT",
+  "author": "Vernok",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "keywords": [
+    "vite",
+    "octobercms",
+    "plugin",
+    "formwidgets",
+    "rollup",
+    "auto-detect"
+  ],
+  "engines": {
+    "node": ">=24.11.1"
+  },
+  "peerDependencies": {
+    "vite": "^8.0.0"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.10.1",
+    "rolldown": "^1.2.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vitest": "^4.0.16"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  }
+}
