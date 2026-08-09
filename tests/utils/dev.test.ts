@@ -3,7 +3,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { EventEmitter } from "node:events";
-import { resolveViteDevOrigin, setupDevMarker } from "../../src/utils/dev.ts";
+import {
+  resolveViteDevMetadataPath,
+  resolveViteDevOrigin,
+  setupViteDevMetadata
+} from "../../src/utils/dev.ts";
 
 async function rimraf(dir: string) {
   try { await fs.rm(dir, { recursive: true, force: true }); } catch {}
@@ -35,28 +39,26 @@ function createServer(root: string) {
   return server;
 }
 
-describe("utils/dev.ts - setupDevMarker", () => {
+describe("utils/dev.ts - setupViteDevMetadata", () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await fs.mkdtemp(path.join(os.tmpdir(), "vite-dev-marker-"));
+    root = await fs.mkdtemp(path.join(os.tmpdir(), "vite-dev-metadata-"));
   });
 
   afterEach(async () => {
     await rimraf(root);
   });
 
-  it("writes .vite-dev and .vite-dev.json with origin metadata", async () => {
+  it("writes .vite-dev.json with origin metadata", async () => {
     const server = createServer(root);
     server.config.server.origin = "http://host.docker.internal:5173";
-    setupDevMarker(server, false, () => {});
+    setupViteDevMetadata(server, false, () => {});
 
-    const markerPath = path.join(root, ".vite-dev");
-    const jsonPath = path.join(root, ".vite-dev.json");
+    const jsonPath = resolveViteDevMetadataPath(root);
 
     await waitFor(async () => {
       try {
-        await fs.access(markerPath);
         await fs.access(jsonPath);
         return true;
       } catch {
@@ -74,7 +76,7 @@ describe("utils/dev.ts - setupDevMarker", () => {
   it("updates .vite-dev.json origin after listening when resolvedUrls are known", async () => {
     const server = createServer(root);
     server.config.server.origin = "http://localhost:4000";
-    setupDevMarker(server, false, () => {});
+    setupViteDevMetadata(server, false, () => {});
 
     server.resolvedUrls = {
       local: ["http://localhost:5174/"],
@@ -82,7 +84,7 @@ describe("utils/dev.ts - setupDevMarker", () => {
     };
     server.httpServer.emit("listening");
 
-    const jsonPath = path.join(root, ".vite-dev.json");
+    const jsonPath = resolveViteDevMetadataPath(root);
     await waitFor(async () => {
       try {
         const json = JSON.parse(await fs.readFile(jsonPath, "utf8"));
@@ -95,14 +97,13 @@ describe("utils/dev.ts - setupDevMarker", () => {
 
   it("does not default .vite-dev.json origin to localhost:5173 when origin cannot be resolved", async () => {
     const server = createServer(root);
-    // Make origin resolution impossible:
     server.config.server = {};
     server.resolvedUrls = undefined;
     server.httpServer.address = () => undefined as any;
 
-    setupDevMarker(server, true, () => {});
+    setupViteDevMetadata(server, true, () => {});
 
-    const jsonPath = path.join(root, ".vite-dev.json");
+    const jsonPath = resolveViteDevMetadataPath(root);
     await waitFor(async () => {
       try {
         const json = JSON.parse(await fs.readFile(jsonPath, "utf8"));
@@ -120,28 +121,25 @@ describe("utils/dev.ts - setupDevMarker", () => {
 
   it("can resolve origin from on-disk .vite-dev.json", async () => {
     const server = createServer(root);
-    // Simulate a case where Vite didn't provide origin yet, but previous metadata exists.
     server.resolvedUrls = undefined;
     server.config.server = {};
     (server.httpServer as any).address = () => undefined;
 
-    const metaPath = path.join(root, ".vite-dev.json");
+    const metaPath = resolveViteDevMetadataPath(root);
     await fs.writeFile(metaPath, JSON.stringify({ origin: "http://localhost:4999", pid: 1, mode: "dev" }), "utf8");
 
     const origin = resolveViteDevOrigin(server as any);
     expect(origin).toBe("http://localhost:4999");
   });
 
-  it("removes both marker files on server close", async () => {
+  it("removes .vite-dev.json on server close", async () => {
     const server = createServer(root);
-    setupDevMarker(server, false, () => {});
+    setupViteDevMetadata(server, false, () => {});
 
-    const markerPath = path.join(root, ".vite-dev");
-    const jsonPath = path.join(root, ".vite-dev.json");
+    const jsonPath = resolveViteDevMetadataPath(root);
 
     await waitFor(async () => {
       try {
-        await fs.access(markerPath);
         await fs.access(jsonPath);
         return true;
       } catch {
@@ -153,15 +151,10 @@ describe("utils/dev.ts - setupDevMarker", () => {
 
     await waitFor(async () => {
       try {
-        await fs.access(markerPath);
+        await fs.access(jsonPath);
         return false;
       } catch {
-        try {
-          await fs.access(jsonPath);
-          return false;
-        } catch {
-          return true;
-        }
+        return true;
       }
     });
   });

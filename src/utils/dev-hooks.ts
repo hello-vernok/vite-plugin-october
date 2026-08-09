@@ -1,5 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
-import { resolveViteDevOrigin, setupDevMarker } from "./dev.js";
+import { resolveViteDevOrigin, setupViteDevMetadata } from "./dev.js";
 import { installStaticAssetMiddleware } from "./static-serve.js";
 import { rewriteAbsoluteCssUrlsInDev } from "./css-dev.js";
 
@@ -82,7 +82,7 @@ export function configureOctoberDevServer(
     });
   }
 
-  setupDevMarker(server, debug, log);
+  setupViteDevMetadata(server, debug, log);
   installStaticAssetMiddleware(server, debug, log);
 }
 

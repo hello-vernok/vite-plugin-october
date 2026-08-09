@@ -1,11 +1,22 @@
 /**
- * Dev-server marker and origin helpers for October Vite plugins.
+ * Dev-server metadata and origin helpers for October Vite plugins.
  */
 import path from "node:path";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import type { AddressInfo } from "node:net";
 import type { ConfigEnv, UserConfig, ViteDevServer } from "vite";
+import { VITE_DEV_METADATA_FILENAME } from "./constants.js";
+
+/**
+ * Resolve the absolute path to `.vite-dev.json` for a Vite project root.
+ *
+ * @param rootDir Vite project root directory
+ * @returns Absolute path to the dev metadata file
+ */
+export function resolveViteDevMetadataPath(rootDir: string): string {
+  return path.resolve(rootDir, VITE_DEV_METADATA_FILENAME);
+}
 
 /**
  * Resolve the current Vite dev origin (including auto-selected/random port).
@@ -28,10 +39,9 @@ export function resolveViteDevOrigin(server: ViteDevServer): string | null {
     return `${proto}://${host}:${info.port}`;
   }
 
-  // Fallback: read from `.vite-dev.json` if we already wrote it earlier.
   try {
     const rootDir = server.config.root ? path.resolve(server.config.root) : process.cwd();
-    const metaPath = path.resolve(rootDir, ".vite-dev.json");
+    const metaPath = resolveViteDevMetadataPath(rootDir);
     if (fsSync.existsSync(metaPath)) {
       const raw = fsSync.readFileSync(metaPath, "utf8");
       const json = JSON.parse(raw) as { origin?: unknown };
@@ -66,30 +76,19 @@ export function resolveConfiguredDevOrigin(
 }
 
 /**
- * Setup the .vite-dev marker lifecycle and .vite-dev.json metadata.
+ * Setup the `.vite-dev.json` metadata lifecycle.
+ *
  * @param server Vite dev server
  * @param debug Enable debug logging
  * @param log Prefixed logger
  */
-export function setupDevMarker(server: ViteDevServer, debug: boolean, log: (...args: unknown[]) => void): void {
+export function setupViteDevMetadata(server: ViteDevServer, debug: boolean, log: (...args: unknown[]) => void): void {
   const rootDir = server.config.root ? path.resolve(server.config.root) : process.cwd();
+  const devMetaPath = resolveViteDevMetadataPath(rootDir);
 
-  const devMarkerPath = path.resolve(rootDir, ".vite-dev");
-  const devMetaPath = path.resolve(rootDir, ".vite-dev.json");
-
-  const resolveOrigin = (): string | null => resolveViteDevOrigin(server);
-
-  const writeDevMarker = async () => {
+  const writeDevMetadata = async () => {
     try {
-      await fs.writeFile(devMarkerPath, "", "utf8");
-      debug && log("wrote dev marker", devMarkerPath);
-    } catch (e) {
-      debug && log("failed-writing-.vite-dev", e);
-    }
-  };
-  const writeDevMeta = async () => {
-    try {
-      const origin = resolveOrigin();
+      const origin = resolveViteDevOrigin(server);
       const payload = {
         ...(origin ? { origin } : {}),
         pid: process.pid,
@@ -99,48 +98,37 @@ export function setupDevMarker(server: ViteDevServer, debug: boolean, log: (...a
       debug && log("wrote dev metadata", devMetaPath, payload);
       if (!origin) debug && log("dev-origin-unknown; wrote metadata without origin", devMetaPath);
     } catch (e) {
-      debug && log("failed-writing-.vite-dev.json", e);
+      debug && log(`failed-writing-${VITE_DEV_METADATA_FILENAME}`, e);
     }
   };
-  const removeDevMarker = async () => {
-    try {
-      await fs.unlink(devMarkerPath);
-      debug && log("removed dev marker", devMarkerPath);
-    } catch (e: any) {
-      if (e && e.code !== "ENOENT") debug && log("failed-removing-.vite-dev", e);
-    }
-  };
-  const removeDevMeta = async () => {
+
+  const removeDevMetadata = async () => {
     try {
       await fs.unlink(devMetaPath);
       debug && log("removed dev metadata", devMetaPath);
     } catch (e: any) {
-      if (e && e.code !== "ENOENT") debug && log("failed-removing-.vite-dev.json", e);
+      if (e && e.code !== "ENOENT") debug && log(`failed-removing-${VITE_DEV_METADATA_FILENAME}`, e);
     }
   };
 
-  void writeDevMarker();
-  void writeDevMeta();
+  void writeDevMetadata();
 
   const onServerListening = () => {
-    // Re-write metadata once the final port/origin is known.
-    void writeDevMeta();
+    void writeDevMetadata();
   };
   if (server.httpServer) server.httpServer.once("listening", onServerListening);
 
   const onServerClose = () => {
-    void removeDevMarker();
-    void removeDevMeta();
+    void removeDevMetadata();
   };
   if (server.httpServer) server.httpServer.once("close", onServerClose);
+
   const onSig = () => {
-    void removeDevMarker();
-    void removeDevMeta();
+    void removeDevMetadata();
   };
   process.once("SIGINT", onSig);
   process.once("SIGTERM", onSig);
   process.once("exit", () => {
-    void removeDevMarker();
-    void removeDevMeta();
+    void removeDevMetadata();
   });
 }
