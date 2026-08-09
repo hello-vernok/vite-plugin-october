@@ -1,0 +1,7 @@
+include:
+  - project: vernok/gitlab-ci-templates
+    file: /npm-package-ci.yml
+
+variables:
+  NPM_SCOPE: "@vernok"
+  NPM_PUBLISH_NPMJS: "true"
