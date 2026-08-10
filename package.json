@@ -1,6 +1,6 @@
 {
   "name": "@vernok/vite-plugin-october",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Vite 8 plugins for OctoberCMS themes and plugins: auto-discovery, October-friendly outputs, and zero-config defineConfig wrappers.",
   "license": "MIT",
   "author": "Vernok",
