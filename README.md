@@ -42,7 +42,7 @@ Agencies benefit from shared conventions—the same folder layout, output struct
 ## Architecture
 
 - **Development:** run `vite dev` in the plugin or theme directory. This package writes `.vite-dev.json` in that directory (the Vite project root). **Vernok.Vite** uses this file during development — see the [PHP package documentation](https://github.com/hello-vernok/oc-vite-plugin).
-- **Production:** run `vite build`. Output lands in `assets/` with `assets/manifest.json`. **Vernok.Vite** resolves hashed entry filenames from the manifest.
+- **Production:** run `vite build`. Output lands in `assets/` with `assets/.vite/manifest.json`. **Vernok.Vite** resolves hashed entry filenames from the manifest.
 
 > **PHP integration:** see the [Vernok.Vite documentation](https://github.com/hello-vernok/oc-vite-plugin) for installing the companion plugin, registering entrypoints, and rendering assets in development and production. Install via [Packagist](https://packagist.org/packages/vernok/oc-vite-plugin) or GitHub. This README covers the Node/Vite side only.
 
@@ -144,7 +144,8 @@ plugins/<vendor>/<plugin>/
 │   ├── formwidgets/<name>/entrypoint.ts   # or entrypoint.js
 │   └── modules/<name>/entrypoint.ts
 └── assets/                  # build output
-    └── manifest.json
+    └── .vite/
+        └── manifest.json
 ```
 
 ### Recommended folder layout — theme
@@ -157,7 +158,8 @@ themes/<theme>/
 │   ├── entrypoint.ts        # or entrypoint.js — site-wide bundle
 │   └── modules/<name>/entrypoint.ts
 └── assets/
-    └── manifest.json
+    └── .vite/
+        └── manifest.json
 ```
 
 Autodiscovery looks only for `entrypoint.{ts,js}` files. Internal folders such as `scss/`, `ts/`, or `images/` are a project convention—you import them from your entrypoint; they are not discovered automatically.
@@ -184,7 +186,7 @@ Run `npm run dev` while developing. Run `npm run build` before deployment (or le
 node_modules/
 ```
 
-Whether you commit the `assets/` directory depends on your deployment workflow. Many teams commit built `assets/` and `manifest.json` for production deploys; others build in CI and deploy the artefact.
+Whether you commit the `assets/` directory depends on your deployment workflow. Many teams commit built `assets/` (including `assets/.vite/manifest.json`) for production deploys; others build in CI and deploy the artefact.
 
 ### Multi-plugin setups
 
@@ -251,7 +253,7 @@ Both option interfaces share the same shape. Pass them to the plugin factory or 
 | `build.outDir` | `"assets"` | October-friendly build output directory |
 | `build.emptyOutDir` | `true` | Remove previous build output before each build |
 | `build.assetsDir` | `""` | Emit assets directly under `outDir`, not in a nested folder |
-| `build.manifest` | `true` | Write `assets/manifest.json` for **Vernok.Vite** |
+| `build.manifest` | `true` | Write `assets/.vite/manifest.json` for **Vernok.Vite** |
 | `build.assetsInlineLimit` | `0` | Keep fonts and images as separate files |
 | `server.cors` | `true` | Enable CORS during development |
 | `css.preprocessorOptions.scss.quietDeps` | `true` | Reduce SCSS dependency deprecation noise |
@@ -380,7 +382,7 @@ All built assets are content-hashed. The pattern depends on the asset type:
 | Imported fonts and images | `[name]-[hash].<ext>`, relocated under the entry's `fonts/` or `images/` folder (see tables above) |
 | Other Rollup-emitted assets | `[name]-[hash].<ext>` (not relocated unless they match a font or image extension) |
 
-`definePluginConfig()` and `defineThemeConfig()` enable `manifest: true`, which writes `assets/manifest.json` for **Vernok.Vite** to resolve hashed filenames in production.
+`definePluginConfig()` and `defineThemeConfig()` enable `manifest: true`, which writes `assets/.vite/manifest.json` for **Vernok.Vite** to resolve hashed filenames in production.
 
 ### CSS URL rewriting
 
@@ -459,7 +461,7 @@ npm run build
 This produces:
 
 - Built assets under `assets/`
-- `assets/manifest.json` for **Vernok.Vite** to resolve hashed entry filenames
+- `assets/.vite/manifest.json` for **Vernok.Vite** to resolve hashed entry filenames
 
 Because `emptyOutDir` defaults to `true`, each build removes the previous contents of `assets/` before writing new output. Commit or deploy the built artefacts according to your project workflow.
 
