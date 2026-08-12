@@ -2,7 +2,7 @@
 
 Zero-configuration Vite 8 plugins for OctoberCMS plugin and theme development. Built for agencies and developers who ship production OctoberCMS projects and need a predictable, manifest-driven frontend build without hand-maintaining Rollup entry maps.
 
-This npm package handles Vite configuration, entrypoint autodiscovery, build output layout, and local development integration. It works alongside **[Vernok.Vite](https://github.com/hello-vernok/oc-vite-plugin)** ([`vernok/oc-vite-plugin` on Packagist](https://packagist.org/packages/vernok/oc-vite-plugin)), which resolves manifests and dev-server state on the PHP side.
+This npm package handles Vite configuration, entrypoint autodiscovery, build output layout, and local development integration. It works alongside **[Vernok.Vite](https://github.com/hello-vernok/vite-plugin)** ([`vernok/vite-plugin` on Packagist](https://packagist.org/packages/vernok/vite-plugin)), which resolves manifests and dev-server state on the PHP side.
 
 | Export | Use when |
 |---|---|
@@ -35,23 +35,23 @@ OctoberCMS frontend assets are split across two packages:
 | Package | Runs in | Responsibility |
 |---|---|---|
 | `@vernok/vite-plugin-october` (this package) | Plugin or theme repository (Node) | Vite config, entry autodiscovery, `assets/` output, `.vite-dev.json` during dev |
-| [`vernok/oc-vite-plugin`](https://packagist.org/packages/vernok/oc-vite-plugin) (`Vernok.Vite`) | OctoberCMS application (PHP) | Dev-server detection, manifest resolution, rendering assets in templates and PHP |
+| [`vernok/vite-plugin`](https://packagist.org/packages/vernok/vite-plugin) (`Vernok.Vite`) | OctoberCMS application (PHP) | Dev-server detection, manifest resolution, rendering assets in templates and PHP |
 
 Agencies benefit from shared conventions—the same folder layout, output structure, and cache-busting behaviour in every client repository. Developers get out-of-the-box defaults via `definePluginConfig()` and `defineThemeConfig()`, so a new plugin or theme can start with a single Vite config file and focus on application code rather than bundler wiring.
 
 ## Architecture
 
-- **Development:** run `vite dev` in the plugin or theme directory. This package writes `.vite-dev.json` in that directory (the Vite project root). **Vernok.Vite** uses this file during development — see the [PHP package documentation](https://github.com/hello-vernok/oc-vite-plugin).
+- **Development:** run `vite dev` in the plugin or theme directory. This package writes `.vite-dev.json` in that directory (the Vite project root). **Vernok.Vite** uses this file during development — see the [PHP package documentation](https://github.com/hello-vernok/vite-plugin).
 - **Production:** run `vite build`. Output lands in `assets/` with `assets/.vite/manifest.json`. **Vernok.Vite** resolves hashed entry filenames from the manifest.
 
-> **PHP integration:** see the [Vernok.Vite documentation](https://github.com/hello-vernok/oc-vite-plugin) for installing the companion plugin, registering entrypoints, and rendering assets in development and production. Install via [Packagist](https://packagist.org/packages/vernok/oc-vite-plugin) or GitHub. This README covers the Node/Vite side only.
+> **PHP integration:** see the [Vernok.Vite documentation](https://github.com/hello-vernok/vite-plugin) for installing the companion plugin, registering entrypoints, and rendering assets in development and production. Install via [Packagist](https://packagist.org/packages/vernok/vite-plugin) or GitHub. This README covers the Node/Vite side only.
 
 ## Requirements
 
 ### OctoberCMS application
 
-- **[`vernok/oc-vite-plugin`](https://packagist.org/packages/vernok/oc-vite-plugin)** (`Vernok.Vite`) installed in the OctoberCMS project that serves your site
-- Supported OctoberCMS and PHP versions are documented in the [PHP package README](https://github.com/hello-vernok/oc-vite-plugin)
+- **[`vernok/vite-plugin`](https://packagist.org/packages/vernok/vite-plugin)** (`Vernok.Vite`) **^0.0.6** installed in the OctoberCMS project that serves your site (use `^0.0.6` for new projects; the Composer package was renamed from `vernok/oc-vite-plugin`)
+- Supported OctoberCMS and PHP versions are documented in the [PHP package README](https://github.com/hello-vernok/vite-plugin)
 
 ### Plugin or theme repository (this package)
 
@@ -66,7 +66,7 @@ Agencies benefit from shared conventions—the same folder layout, output struct
 Install the companion plugin in the OctoberCMS application that will serve your site:
 
 ```bash
-composer require vernok/oc-vite-plugin
+composer require vernok/vite-plugin:^0.0.6
 ```
 
 Or via the OctoberCMS plugin manager:
@@ -75,7 +75,7 @@ Or via the OctoberCMS plugin manager:
 php artisan plugin:install Vernok.Vite
 ```
 
-Source: [github.com/hello-vernok/oc-vite-plugin](https://github.com/hello-vernok/oc-vite-plugin) · [packagist.org/packages/vernok/oc-vite-plugin](https://packagist.org/packages/vernok/oc-vite-plugin)
+Source: [github.com/hello-vernok/vite-plugin](https://github.com/hello-vernok/vite-plugin) · [packagist.org/packages/vernok/vite-plugin](https://packagist.org/packages/vernok/vite-plugin)
 
 #### Declaring `Vernok.Vite` as a dependency
 
@@ -84,7 +84,7 @@ Where you declare the dependency depends on **what you ship** (plugin vs. theme)
 | You maintain | Declare in | Required? |
 |---|---|---|
 | OctoberCMS **plugin** that uses Vite-built assets | `plugin.yaml` → `require` | **Yes** — October installs missing plugins when your plugin is installed |
-| Same plugin, distributed via **Composer** | Plugin `composer.json` → `require` | **Yes** — `vernok/oc-vite-plugin` (keep in sync with `plugin.yaml`) |
+| Same plugin, distributed via **Composer** | Plugin `composer.json` → `require` | **Yes** — `vernok/vite-plugin` (keep in sync with `plugin.yaml`) |
 | OctoberCMS **theme** that uses Vite-built assets | `theme.yaml` → `require` | **Yes** — October installs required plugins when the theme is installed |
 | Same theme, distributed via **Composer** | Theme `composer.json` → `require` | **Yes** — same rule as for plugins |
 
@@ -100,7 +100,7 @@ require:
 ```json
 {
   "require": {
-    "vernok/oc-vite-plugin": "^0.0.2"
+    "vernok/vite-plugin": "^0.0.6"
   }
 }
 ```
@@ -117,19 +117,19 @@ require:
 ```json
 {
   "require": {
-    "vernok/oc-vite-plugin": "^0.0.2"
+    "vernok/vite-plugin": "^0.0.6"
   }
 }
 ```
 
-If your plugin or theme is **not** installed via Composer (for example, only committed under `plugins/` or `themes/` in a project repo), `plugin.yaml` or `theme.yaml` is enough for October’s dependency resolution. Add `vernok/oc-vite-plugin` to `composer.json` when you publish or distribute through Composer so both install paths stay aligned.
+If your plugin or theme is **not** installed via Composer (for example, only committed under `plugins/` or `themes/` in a project repo), `plugin.yaml` or `theme.yaml` is enough for October’s dependency resolution. Add `vernok/vite-plugin` to `composer.json` when you publish or distribute through Composer so both install paths stay aligned.
 
 ### 2. Plugin or theme repository (Node)
 
 In the repository that contains your Vite config (`vite.config.ts` or `vite.config.js`):
 
 ```bash
-npm i -D @vernok/vite-plugin-october vite
+npm i -D @vernok/vite-plugin-october@^0.0.6 vite
 ```
 
 ## Project setup
@@ -190,7 +190,7 @@ Whether you commit the `assets/` directory depends on your deployment workflow. 
 
 ### Multi-plugin setups
 
-Each plugin or theme with its own Vite config writes **its own** `.vite-dev.json` in that repository root. **Vernok.Vite** resolves dev and production assets per registered source — see the [PHP package documentation](https://github.com/hello-vernok/oc-vite-plugin).
+Each plugin or theme with its own Vite config writes **its own** `.vite-dev.json` in that repository root. **Vernok.Vite** resolves dev and production assets per registered source — see the [PHP package documentation](https://github.com/hello-vernok/vite-plugin).
 
 ## Quick start
 
@@ -407,7 +407,7 @@ When you run `vite dev`, this package writes `.vite-dev.json` in the **plugin or
 
 This package **writes, reads, and removes** `.vite-dev.json` while `vite dev` is running (for example when resolving the dev origin for CSS URL rewriting).
 
-**Vernok.Vite** reads the same `.vite-dev.json` file from each registered plugin or theme root to detect dev mode and resolve the Vite origin. See the [PHP package documentation](https://github.com/hello-vernok/oc-vite-plugin) for details.
+**Vernok.Vite** reads the same `.vite-dev.json` file from each registered plugin or theme root to detect dev mode and resolve the Vite origin. See the [PHP package documentation](https://github.com/hello-vernok/vite-plugin) for details.
 
 On startup, the file is created immediately. The `origin` field **may be missing at first** until Vite knows the final host and port—there is no default such as `http://localhost:5173`. Once the dev server is listening, the file is updated with the resolved `origin` when available.
 
@@ -465,7 +465,7 @@ This produces:
 
 Because `emptyOutDir` defaults to `true`, each build removes the previous contents of `assets/` before writing new output. Commit or deploy the built artefacts according to your project workflow.
 
-See the [Vernok.Vite documentation](https://github.com/hello-vernok/oc-vite-plugin) for how PHP registers and renders entrypoints against the manifest in production.
+See the [Vernok.Vite documentation](https://github.com/hello-vernok/vite-plugin) for how PHP registers and renders entrypoints against the manifest in production.
 
 ## Troubleshooting
 
