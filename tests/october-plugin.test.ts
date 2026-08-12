@@ -53,9 +53,36 @@ describe('octoberPlugin (plugin repo)', () => {
     expect(entryFileNames({ name: 'fw:alpha:entrypoint' })).toBe('formwidgets/alpha/entrypoint-[hash].js');
     expect(entryFileNames({ name: 'mod:cart:entrypoint' })).toBe('modules/cart/entrypoint-[hash].js');
 
+    expect(entryFileNames({ name: 'fw_alpha_entrypoint' })).toBe('formwidgets/alpha/entrypoint-[hash].js');
+    expect(entryFileNames({ name: 'mod_cart_entrypoint' })).toBe('modules/cart/entrypoint-[hash].js');
+    expect(entryFileNames({ name: 'mod_content_example_entrypoint' })).toBe(
+      'modules/content_example/entrypoint-[hash].js'
+    );
+
     // CSS
     expect(assetFileNames({ name: 'fw:alpha:entrypoint.css' })).toBe('formwidgets/alpha/entrypoint-[hash].css');
     expect(assetFileNames({ name: 'mod:cart:entrypoint.css' })).toBe('modules/cart/entrypoint-[hash].css');
+    expect(assetFileNames({ name: 'mod_cart_entrypoint.css' })).toBe('modules/cart/entrypoint-[hash].css');
+    expect(assetFileNames({ name: 'mod_content_example_entrypoint.css' })).toBe(
+      'modules/content_example/entrypoint-[hash].css'
+    );
+  });
+
+  it('relocates module assets for Rolldown-sanitized entry names with underscores in the module folder', () => {
+    const plugin = octoberPlugin();
+    const bundle: any = {
+      'mod:content_example:entrypoint.js': {
+        type: 'chunk',
+        name: 'mod_content_example_entrypoint',
+        isEntry: true,
+        viteMetadata: { assets: new Set(['icon.svg']) }
+      },
+      'icon.svg': { type: 'asset', name: 'icon.svg', fileName: 'icon.svg', source: new Uint8Array([0]) }
+    };
+
+    (plugin as any).generateBundle?.({}, bundle);
+
+    expect(bundle['icon.svg'].fileName).toBe('modules/content_example/images/icon.svg');
   });
 
   it('does not force server.origin during vite serve when hostUrl/VITE_HOST_URL are missing', () => {

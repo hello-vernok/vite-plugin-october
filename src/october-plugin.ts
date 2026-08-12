@@ -6,6 +6,7 @@ import { configureOctoberDevServer, createOctoberCssTransformHook, createOctober
 import { rewriteCssUrlsInBundle } from "./utils/css.js";
 import { collectAssetOwners } from "./utils/bundle-owners.js";
 import { relocatePluginAssets, type AssetContainerDirs } from "./utils/relocate-assets.js";
+import { parseOctoberEntryName } from "./utils/entry-names.js";
 import { createOctoberRollupOutput } from "./utils/rollup-output.js";
 
 /**
@@ -58,39 +59,21 @@ export function discoverPluginEntries(rootDir: string): Record<string, string> {
 }
 
 /**
- * Parse a plugin entry name into a structured descriptor.
- *
- * @param name Input entry name
- * @returns Parsed descriptor or null
- */
-function parsePluginEntryName(name: string):
-  | { kind: "fw"; widget: string }
-  | { kind: "mod"; module: string }
-  | null {
-  if (!name.includes(":")) return null;
-  const seg = name.split(":");
-
-  if (seg[0] === "fw" && seg[2] === "entrypoint") return { kind: "fw", widget: seg[1] };
-  if (seg[0] === "mod" && seg[2] === "entrypoint") return { kind: "mod", module: seg[1] };
-  return null;
-}
-
-/**
  * Resolve plugin asset container folders for an entry owner.
  *
  * @param owner Rollup entry chunk name
  * @returns Font and image output directories
  */
 function pluginContainerDirs(owner: string): AssetContainerDirs {
-  const parsed = parsePluginEntryName(owner);
-  if (parsed?.kind === "fw") {
+  const parsed = parseOctoberEntryName(owner);
+  if (parsed?.tag === "fw") {
     return {
-      fonts: `formwidgets/${parsed.widget}/fonts`,
-      images: `formwidgets/${parsed.widget}/images`
+      fonts: `formwidgets/${parsed.entryName}/fonts`,
+      images: `formwidgets/${parsed.entryName}/images`
     };
   }
-  if (parsed?.kind === "mod") {
-    const base = `modules/${parsed.module}`;
+  if (parsed?.tag === "mod") {
+    const base = `modules/${parsed.entryName}`;
     return { fonts: `${base}/fonts`, images: `${base}/images` };
   }
 
@@ -104,9 +87,9 @@ function pluginContainerDirs(owner: string): AssetContainerDirs {
  * @returns Output path template
  */
 function entryOutputPath(name: string): string {
-  const parsed = parsePluginEntryName(name);
-  if (parsed?.kind === "fw") return `formwidgets/${parsed.widget}/entrypoint-[hash].js`;
-  if (parsed?.kind === "mod") return `modules/${parsed.module}/entrypoint-[hash].js`;
+  const parsed = parseOctoberEntryName(name);
+  if (parsed?.tag === "fw") return `formwidgets/${parsed.entryName}/entrypoint-[hash].js`;
+  if (parsed?.tag === "mod") return `modules/${parsed.entryName}/entrypoint-[hash].js`;
   return `${name}/entrypoint-[hash].js`;
 }
 
@@ -117,9 +100,9 @@ function entryOutputPath(name: string): string {
  * @returns Output path template
  */
 function cssOutputPath(name: string): string {
-  const parsed = parsePluginEntryName(name);
-  if (parsed?.kind === "fw") return `formwidgets/${parsed.widget}/entrypoint-[hash].css`;
-  if (parsed?.kind === "mod") return `modules/${parsed.module}/entrypoint-[hash].css`;
+  const parsed = parseOctoberEntryName(name);
+  if (parsed?.tag === "fw") return `formwidgets/${parsed.entryName}/entrypoint-[hash].css`;
+  if (parsed?.tag === "mod") return `modules/${parsed.entryName}/entrypoint-[hash].css`;
   return `${name}/entrypoint-[hash].css`;
 }
 

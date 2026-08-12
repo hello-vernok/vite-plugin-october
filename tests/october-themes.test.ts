@@ -60,7 +60,32 @@ describe('october-theme plugin', () => {
     expect(entryFileNames({ name: 'root:entrypoint' })).toBe('js/entrypoint-[hash].js');
     expect(assetFileNames({ name: 'root:entrypoint.css' })).toBe('css/entrypoint-[hash].css');
     expect(entryFileNames({ name: 'mod:blog:entrypoint' })).toBe('modules/blog/entrypoint-[hash].js');
+    expect(entryFileNames({ name: 'mod_content_example_entrypoint' })).toBe(
+      'modules/content_example/entrypoint-[hash].js'
+    );
     expect(assetFileNames({ name: 'mod:blog:entrypoint.css' })).toBe('modules/blog/entrypoint-[hash].css');
+    expect(assetFileNames({ name: 'mod_content_example_entrypoint.css' })).toBe(
+      'modules/content_example/entrypoint-[hash].css'
+    );
+    expect(entryFileNames({ name: 'root_entrypoint' })).toBe('js/entrypoint-[hash].js');
+    expect(assetFileNames({ name: 'root_entrypoint.css' })).toBe('css/entrypoint-[hash].css');
+  });
+
+  it('relocates module assets for Rolldown-sanitized theme module names with underscores', () => {
+    const plugin = octoberTheme();
+    const bundle: any = {
+      'mod:content_example:entrypoint.js': {
+        type: 'chunk',
+        name: 'mod_content_example_entrypoint',
+        isEntry: true,
+        viteMetadata: { importedAssets: new Set(['cover.jpg']) }
+      },
+      'cover.jpg': { type: 'asset', name: 'cover.jpg', fileName: 'cover.jpg', source: new Uint8Array([0]) }
+    };
+
+    (plugin as any).generateBundle?.({}, bundle);
+
+    expect(bundle['cover.jpg'].fileName).toBe('modules/content_example/images/cover.jpg');
   });
 
   it('does not force server.origin during vite serve when hostUrl/VITE_HOST_URL are missing', () => {

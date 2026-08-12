@@ -6,6 +6,7 @@ import { configureOctoberDevServer, createOctoberCssTransformHook, createOctober
 import { rewriteCssUrlsInBundle } from "./utils/css.js";
 import { collectAssetOwners } from "./utils/bundle-owners.js";
 import { relocateThemeAssets, type AssetContainerDirs } from "./utils/relocate-assets.js";
+import { parseOctoberEntryName } from "./utils/entry-names.js";
 import { createOctoberRollupOutput } from "./utils/rollup-output.js";
 
 /**
@@ -56,27 +57,17 @@ export function discoverThemeEntries(rootDir: string): Record<string, string> {
 }
 
 /**
- * Split an internal theme entry name into segments.
- *
- * @param name Rollup entry chunk name
- * @returns Entry name segments
- */
-function splitThemeEntryName(name: string): string[] {
-  return name.includes(":") ? name.split(":") : name.split("_");
-}
-
-/**
  * Resolve theme asset container folders for an entry owner.
  *
  * @param owner Rollup entry chunk name
  * @returns Font and image output directories
  */
 function themeContainerDirs(owner: string): AssetContainerDirs {
-  const seg = splitThemeEntryName(owner);
-  if (seg[0] === "mod") {
+  const parsed = parseOctoberEntryName(owner);
+  if (parsed?.tag === "mod") {
     return {
-      fonts: `modules/${seg[1]}/fonts`,
-      images: `modules/${seg[1]}/images`
+      fonts: `modules/${parsed.entryName}/fonts`,
+      images: `modules/${parsed.entryName}/images`
     };
   }
 
@@ -90,9 +81,9 @@ function themeContainerDirs(owner: string): AssetContainerDirs {
  * @returns Output path template
  */
 function entryOutputPath(name: string): string {
-  const parts = splitThemeEntryName(name);
-  if (parts[0] === "root") return "js/entrypoint-[hash].js";
-  if (parts[0] === "mod") return `modules/${parts[1]}/entrypoint-[hash].js`;
+  const parsed = parseOctoberEntryName(name);
+  if (parsed?.tag === "root") return "js/entrypoint-[hash].js";
+  if (parsed?.tag === "mod") return `modules/${parsed.entryName}/entrypoint-[hash].js`;
   return `js/${name}-[hash].js`;
 }
 
@@ -103,9 +94,9 @@ function entryOutputPath(name: string): string {
  * @returns Output path template
  */
 function cssOutputPath(name: string): string {
-  const parts = splitThemeEntryName(name);
-  if (parts[0] === "root") return "css/entrypoint-[hash].css";
-  if (parts[0] === "mod") return `modules/${parts[1]}/entrypoint-[hash].css`;
+  const parsed = parseOctoberEntryName(name);
+  if (parsed?.tag === "root") return "css/entrypoint-[hash].css";
+  if (parsed?.tag === "mod") return `modules/${parsed.entryName}/entrypoint-[hash].css`;
   return `css/${name}-[hash].css`;
 }
 
