@@ -33,6 +33,9 @@ describe('octoberPlugin (plugin repo)', () => {
   });
 
   it('autodiscovers all entrypoint patterns', async () => {
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', '_shared'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, 'resources', 'modules', '_shared', 'entrypoint.ts'), '// reserved');
+
     const entries = discoverPluginEntries(tempRoot);
     const keys = Object.keys(entries).sort();
     expect(keys).toEqual([
@@ -48,6 +51,9 @@ describe('octoberPlugin (plugin repo)', () => {
     expect(roll).toBeTruthy();
     const entryFileNames = roll.output.entryFileNames as (i: { name: string }) => string;
     const assetFileNames = roll.output.assetFileNames as (i: { name?: string }) => string;
+    const chunkFileNames = roll.output.chunkFileNames as string;
+
+    expect(chunkFileNames).toBe('modules/_shared/[name]-[hash].js');
 
     // JS
     expect(entryFileNames({ name: 'fw:alpha:entrypoint' })).toBe('formwidgets/alpha/entrypoint-[hash].js');

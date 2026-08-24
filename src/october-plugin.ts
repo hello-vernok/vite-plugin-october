@@ -8,6 +8,7 @@ import { collectAssetOwners } from "./utils/bundle-owners.js";
 import { relocatePluginAssets, type AssetContainerDirs } from "./utils/relocate-assets.js";
 import { parseOctoberEntryName } from "./utils/entry-names.js";
 import { createOctoberRollupOutput } from "./utils/rollup-output.js";
+import { RESERVED_MODULE_FOLDER } from "./utils/constants.js";
 
 /**
  * Plugin options.
@@ -51,7 +52,11 @@ export function discoverPluginEntries(rootDir: string): Record<string, string> {
     }
 
     if (kind === "modules") {
-      entries[`mod:${parts[idxRes + 2]}:entrypoint`] = path.resolve(file);
+      const moduleName = parts[idxRes + 2];
+      if (moduleName === RESERVED_MODULE_FOLDER) {
+        continue;
+      }
+      entries[`mod:${moduleName}:entrypoint`] = path.resolve(file);
     }
   }
 

@@ -6,7 +6,9 @@ import { configureOctoberDevServer, createOctoberCssTransformHook, createOctober
 import { rewriteCssUrlsInBundle } from "./utils/css.js";
 import { collectAssetOwners } from "./utils/bundle-owners.js";
 import { relocateThemeAssets, type AssetContainerDirs } from "./utils/relocate-assets.js";
+import { relocateThemeSharedChunks } from "./utils/relocate-shared-chunks.js";
 import { parseOctoberEntryName } from "./utils/entry-names.js";
+import { RESERVED_MODULE_FOLDER } from "./utils/constants.js";
 import { createOctoberRollupOutput } from "./utils/rollup-output.js";
 
 /**
@@ -49,7 +51,11 @@ export function discoverThemeEntries(rootDir: string): Record<string, string> {
       entries["root:entrypoint"] = path.resolve(file);
     }
     if (next === "modules") {
-      entries[`mod:${parts[idxRes + 2]}:entrypoint`] = path.resolve(file);
+      const moduleName = parts[idxRes + 2];
+      if (moduleName === RESERVED_MODULE_FOLDER) {
+        continue;
+      }
+      entries[`mod:${moduleName}:entrypoint`] = path.resolve(file);
     }
   }
 
@@ -165,6 +171,7 @@ export function octoberTheme(options: OctoberThemeOptions = {}): Plugin {
     transform: createOctoberCssTransformHook(enabled, devState, debug, log),
 
     generateBundle(_opts, bundle) {
+      relocateThemeSharedChunks(bundle);
       const owners = collectAssetOwners(bundle);
       relocateThemeAssets({
         bundle,

@@ -37,6 +37,9 @@ describe('october-theme plugin', () => {
   });
 
   it('discovers entries from theme root and modules entrypoints', async () => {
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', '_shared'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, 'resources', 'modules', '_shared', 'entrypoint.ts'), '// reserved');
+
     const entries = discoverThemeEntries(tempRoot);
     expect(Object.keys(entries).sort()).toEqual(['mod:blog:entrypoint', 'root:entrypoint']);
     expect(entries['root:entrypoint'].replaceAll('\\','/')).toMatch(/\/resources\/entrypoint\.ts$/);
@@ -57,6 +60,10 @@ describe('october-theme plugin', () => {
     expect(rollupOptions).toBeTruthy();
     const entryFileNames = rollupOptions.output.entryFileNames as (info: { name: string }) => string;
     const assetFileNames = rollupOptions.output.assetFileNames as (info: { name?: string }) => string;
+    const chunkFileNames = rollupOptions.output.chunkFileNames as string;
+
+    expect(chunkFileNames).toBe('modules/_shared/[name]-[hash].js');
+
     expect(entryFileNames({ name: 'root:entrypoint' })).toBe('js/entrypoint-[hash].js');
     expect(assetFileNames({ name: 'root:entrypoint.css' })).toBe('css/entrypoint-[hash].css');
     expect(entryFileNames({ name: 'mod:blog:entrypoint' })).toBe('modules/blog/entrypoint-[hash].js');

@@ -68,4 +68,101 @@ describe('vite build output paths', () => {
     expect(outputs.some((file) => file.endsWith('.js'))).toBe(true);
     expect(outputs.some((file) => file.includes('mod_content_example_entrypoint'))).toBe(false);
   });
+
+  it('writes plugin shared chunks under assets/modules/_shared', async () => {
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oct-vite-build-plugin-shared-'));
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', 'alpha'), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', 'beta'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, 'resources', 'modules', 'shared.ts'), "export const value = 'shared';");
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'modules', 'alpha', 'entrypoint.ts'),
+      "import { value } from '../shared.ts'; console.log(value);"
+    );
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'modules', 'beta', 'entrypoint.ts'),
+      "import { value } from '../shared.ts'; console.log(value);"
+    );
+
+    await build({
+      ...definePluginConfig(),
+      root: tempRoot,
+      configFile: false,
+      logLevel: 'silent'
+    });
+
+    const sharedOutputs = await fg('assets/modules/_shared/*.js', {
+      cwd: tempRoot,
+      onlyFiles: true
+    });
+
+    expect(sharedOutputs.length).toBeGreaterThan(0);
+
+    const manifest = JSON.parse(
+      await fs.readFile(path.join(tempRoot, 'assets', '.vite', 'manifest.json'), 'utf8')
+    ) as Record<string, { imports?: string[]; file?: string }>;
+
+    const alphaEntry = manifest['resources/modules/alpha/entrypoint.ts'];
+    expect(alphaEntry?.imports?.length).toBeGreaterThan(0);
+    expect(alphaEntry?.imports?.some((key) => manifest[key]?.file?.startsWith('modules/_shared/'))).toBe(true);
+  });
+
+  it('writes theme root-involved shared chunks under assets/js/_shared', async () => {
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oct-vite-build-theme-root-shared-'));
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', 'blog'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, 'resources', 'shared.ts'), "export const value = 'shared';");
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'entrypoint.ts'),
+      "import { value } from './shared.ts'; console.log(value);"
+    );
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'modules', 'blog', 'entrypoint.ts'),
+      "import { value } from '../../shared.ts'; console.log(value);"
+    );
+
+    await build({
+      ...defineThemeConfig(),
+      root: tempRoot,
+      configFile: false,
+      logLevel: 'silent'
+    });
+
+    const sharedOutputs = await fg('assets/js/_shared/*.js', {
+      cwd: tempRoot,
+      onlyFiles: true
+    });
+
+    expect(sharedOutputs.length).toBeGreaterThan(0);
+  });
+
+  it('writes theme module-only shared chunks under assets/modules/_shared', async () => {
+    tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oct-vite-build-theme-mod-shared-'));
+    await fs.mkdir(path.join(tempRoot, 'resources'), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', 'alpha'), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, 'resources', 'modules', 'beta'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, 'resources', 'entrypoint.ts'), "console.log('theme root');");
+    await fs.writeFile(path.join(tempRoot, 'resources', 'modules', 'shared.ts'), "export const value = 'shared';");
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'modules', 'alpha', 'entrypoint.ts'),
+      "import { value } from '../shared.ts'; console.log(value);"
+    );
+    await fs.writeFile(
+      path.join(tempRoot, 'resources', 'modules', 'beta', 'entrypoint.ts'),
+      "import { value } from '../shared.ts'; console.log(value);"
+    );
+
+    await build({
+      ...defineThemeConfig(),
+      root: tempRoot,
+      configFile: false,
+      logLevel: 'silent'
+    });
+
+    const sharedOutputs = await fg('assets/modules/_shared/*.js', {
+      cwd: tempRoot,
+      onlyFiles: true
+    });
+
+    expect(sharedOutputs.length).toBeGreaterThan(0);
+    expect(await fg('assets/js/_shared/*.js', { cwd: tempRoot, onlyFiles: true })).toHaveLength(0);
+  });
 });

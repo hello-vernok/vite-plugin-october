@@ -307,6 +307,8 @@ Entrypoints are discovered under `resources/`:
 | FormWidget | `resources/formwidgets/<name>/entrypoint.{ts,js}` |
 | Module | `resources/modules/<name>/entrypoint.{ts,js}` |
 
+> **Reserved folder:** `resources/modules/_shared/` is output-only for shared JS chunks. Do not place an `entrypoint` there — it is not autodiscovered.
+
 With `build.outDir = 'assets'` (the default), outputs are written as follows.
 
 Entry JavaScript and CSS use fixed `entrypoint-[hash]` names. Fonts and images **imported from the entrypoint** (or its dependency graph) are emitted as `[name]-[hash].<ext>` (for example `logo-BM80Y3XF.png`) and placed under the `fonts/` or `images/` folder for that entry.
@@ -330,6 +332,7 @@ Example: `assets/formwidgets/alpha/images/logo-BM80Y3XF.png`
 | CSS | `assets/modules/<name>/entrypoint-[hash].css` |
 | Images (imported) | `assets/modules/<name>/images/[name]-[hash].<ext>` |
 | Fonts (imported) | `assets/modules/<name>/fonts/[name]-[hash].<ext>` |
+| Shared JS (imported by multiple entries) | `assets/modules/_shared/[name]-[hash].js` |
 
 Example: `assets/modules/cart/images/cms-logo-BM80Y3XF.png`
 
@@ -341,6 +344,8 @@ Entrypoints are discovered under the theme `resources/` directory:
 |---|---|
 | Theme (global) | `resources/entrypoint.{ts,js}` |
 | Module (page-specific) | `resources/modules/<name>/entrypoint.{ts,js}` |
+
+> **Reserved folder:** `resources/modules/_shared/` is output-only for shared JS chunks. Do not place an `entrypoint` there — it is not autodiscovered.
 
 Use the **root entrypoint** for site-wide CSS and JavaScript. Use **modules** when a specific CMS page needs its own bundle—for example, a Vue or React application that should not load on every page.
 
@@ -354,6 +359,7 @@ With `build.outDir = 'assets'`, outputs are written as follows. Naming rules mat
 | CSS | `assets/css/entrypoint-[hash].css` |
 | Images (imported) | `assets/images/[name]-[hash].<ext>` |
 | Fonts (imported) | `assets/fonts/[name]-[hash].<ext>` |
+| Shared JS (root entry involved) | `assets/js/_shared/[name]-[hash].js` |
 
 Example: `assets/images/hero-D4k9s1Qa.webp`
 
@@ -365,6 +371,7 @@ Example: `assets/images/hero-D4k9s1Qa.webp`
 | CSS | `assets/modules/<name>/entrypoint-[hash].css` |
 | Images (imported) | `assets/modules/<name>/images/[name]-[hash].<ext>` |
 | Fonts (imported) | `assets/modules/<name>/fonts/[name]-[hash].<ext>` |
+| Shared JS (module entries only) | `assets/modules/_shared/[name]-[hash].js` |
 
 Example: `assets/modules/blog/images/cover-BM80Y3XF.jpg`
 
@@ -379,6 +386,7 @@ All built assets are content-hashed. The pattern depends on the asset type:
 | Asset kind | Filename pattern |
 |---|---|
 | Entry JavaScript and CSS | `entrypoint-[hash].js` / `entrypoint-[hash].css` |
+| Shared JavaScript (multiple entrypoints) | `modules/_shared/[name]-[hash].js` (plugins; theme modules). Theme builds also use `js/_shared/[name]-[hash].js` when the root entrypoint imports the chunk |
 | Imported fonts and images | `[name]-[hash].<ext>`, relocated under the entry's `fonts/` or `images/` folder (see tables above) |
 | Other Rollup-emitted assets | `[name]-[hash].<ext>` (not relocated unless they match a font or image extension) |
 
